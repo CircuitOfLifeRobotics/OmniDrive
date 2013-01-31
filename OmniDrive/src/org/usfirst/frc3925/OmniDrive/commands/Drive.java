@@ -80,7 +80,7 @@ public class  Drive extends Command {
         
         double r, angle;
         r = Math.sqrt(movement*movement + strafe*strafe);
-        angle = MathUtils.atan2(strafe, movement);
+        angle = MathUtils.atan2(strafe, movement)-RAD_45_DEG;
         
         speeds[0] = trimDouble(r*Math.cos(angle) + spin*SPINSCALE);
         speeds[1] = trimDouble(r*Math.sin(angle) - spin*SPINSCALE);
