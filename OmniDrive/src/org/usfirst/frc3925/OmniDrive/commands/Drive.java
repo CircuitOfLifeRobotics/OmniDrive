@@ -14,6 +14,7 @@ package org.usfirst.frc3925.OmniDrive.commands;
 import com.sun.squawk.util.MathUtils;
 import edu.wpi.first.wpilibj.command.Command;
 import org.usfirst.frc3925.OmniDrive.Robot;
+import org.usfirst.frc3925.OmniDrive.RobotMap;
 
 /**
  *
@@ -35,6 +36,17 @@ public class  Drive extends Command {
 
     // Called repeatedly when this Command is scheduled to run
     protected void execute() {
+        double movement = Robot.oi.xbox.getRawAxis(2);
+        double strafe = Robot.oi.xbox.getRawAxis(1);
+        double spin = Robot.oi.xbox.getRawAxis(4);
+        
+        
+        double[] speeds = getOmniSpeeds(movement, strafe, spin);
+        
+        RobotMap.omniDriveSubsystemTopLeftJag.set(speeds[0]);
+        RobotMap.omniDriveSubsystemTopRightJag.set(speeds[1]);
+        RobotMap.omniDriveSubsystemBottomLeftJag.set(speeds[2]);
+        RobotMap.omniDriveSubsystemBottomRightJag.set(speeds[3]);
     }
 
     // Make this return true when this Command no longer needs to run execute()
@@ -44,6 +56,10 @@ public class  Drive extends Command {
 
     // Called once after isFinished returns true
     protected void end() {
+        RobotMap.omniDriveSubsystemTopLeftJag.set(0);
+        RobotMap.omniDriveSubsystemTopRightJag.set(0);
+        RobotMap.omniDriveSubsystemBottomLeftJag.set(0);
+        RobotMap.omniDriveSubsystemBottomRightJag.set(0);
     }
 
     // Called when another command which requires one or more of the same
@@ -51,28 +67,44 @@ public class  Drive extends Command {
     protected void interrupted() {
     }
     
-    private double[] omniDrive(double movement, double strafe, double spin)
+    private static final double RAD_45_DEG = Math.PI/4;
+    private static final double SPINSCALE = 0.5D;
+    
+    private double[] getOmniSpeeds(double movement, double strafe, double spin)
     {
         double[] speeds = new double[4];
         
-        movement = trimInput(movement);
-        strafe = trimInput(strafe);
-        spin = trimInput(spin);
+        movement = trimDouble(movement);
+        strafe = trimDouble(strafe);
+        spin = trimDouble(spin);
         
         Vector basevec = Vector.vectorXY(strafe, movement);
+        basevec.angle -= RAD_45_DEG;
         
         //create speeds from basevec
-     
+        speeds[0] = (speeds[3] = basevec.r*Math.cos(basevec.angle));
+        speeds[1] = (speeds[2] = basevec.r*Math.sin(basevec.angle));
         
         //adjust the speeds based on rotation
+        
+        for (int i = 0; i < 4 ; i++){
+            if (i == 1 || i == 2){
+                speeds[i] -= spin * SPINSCALE;
+            } else {
+                speeds[i] += spin * SPINSCALE;
+            }
+            speeds[i] = trimDouble(speeds[i]);
+        }
+        
+        
         
         return speeds;
     }
     
-    private double trimInput(double in)
+    private double trimDouble(double in)
     {
-        if (in > 1.0d) in = 1.0d;
-        if (in < -1.0d) in = -1.0d;
+        if (in > 1.0d){ in = 1.0d;}
+        if (in < -1.0d){ in = -1.0d;}
         return in;
     }
     
