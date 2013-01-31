@@ -43,9 +43,9 @@ public class  Drive extends Command {
         
         double[] speeds = getOmniSpeeds(movement, strafe, spin);
         
-        RobotMap.omniDriveSubsystemTopLeftJag.set(speeds[0]);
+        RobotMap.omniDriveSubsystemTopLeftJag.set(-speeds[0]);
         RobotMap.omniDriveSubsystemTopRightJag.set(speeds[1]);
-        RobotMap.omniDriveSubsystemBottomLeftJag.set(speeds[2]);
+        RobotMap.omniDriveSubsystemBottomLeftJag.set(-speeds[2]);
         RobotMap.omniDriveSubsystemBottomRightJag.set(speeds[3]);
     }
 
@@ -67,7 +67,7 @@ public class  Drive extends Command {
     protected void interrupted() {
     }
     
-    private static final double RAD_45_DEG = Math.PI/4;
+    private static final double RAD_45_DEG = Math.PI/4.0;
     private static final double SPINSCALE = 0.5D;
     
     private double[] getOmniSpeeds(double movement, double strafe, double spin)
@@ -78,24 +78,14 @@ public class  Drive extends Command {
         strafe = trimDouble(strafe);
         spin = trimDouble(spin);
         
-        Vector basevec = Vector.vectorXY(strafe, movement);
-        basevec.angle -= RAD_45_DEG;
+        double r, angle;
+        r = Math.sqrt(movement*movement + strafe*strafe);
+        angle = MathUtils.atan2(strafe, movement);
         
-        //create speeds from basevec
-        speeds[0] = (speeds[3] = basevec.r*Math.cos(basevec.angle));
-        speeds[1] = (speeds[2] = basevec.r*Math.sin(basevec.angle));
-        
-        //adjust the speeds based on rotation
-        
-        for (int i = 0; i < 4 ; i++){
-            if (i == 1 || i == 2){
-                speeds[i] -= spin * SPINSCALE;
-            } else {
-                speeds[i] += spin * SPINSCALE;
-            }
-            speeds[i] = trimDouble(speeds[i]);
-        }
-        
+        speeds[0] = trimDouble(r*Math.cos(angle) + spin*SPINSCALE);
+        speeds[1] = trimDouble(r*Math.sin(angle) - spin*SPINSCALE);
+        speeds[2] = trimDouble(r*Math.sin(angle) + spin*SPINSCALE);
+        speeds[3] = trimDouble(r*Math.cos(angle) - spin*SPINSCALE);
         
         
         return speeds;
@@ -108,39 +98,5 @@ public class  Drive extends Command {
         return in;
     }
     
-    private static class Vector {
-        
-        public double angle;
-        public double r;
-        
-        public Vector (double r, double angle)
-        {
-            this.r = r;
-            this.angle = angle;
-        }
-        
-        public static Vector vectorXY(double x, double y)
-        {
-            return new Vector(Math.sqrt(x*x + y*y),MathUtils.atan2(y, x));
-        }
-        
-        public Vector add(Vector v)
-        {
-            double r, a, x, y;
-            
-            x = this.xdisplacement() + v.xdisplacement();
-            y = this.ydisplacement() + v.ydisplacement();
-            
-            return vectorXY(x,y);
-        }
-        
-        public double xdisplacement()
-        {
-            return r*Math.cos(angle);
-        }
-        public double ydisplacement()
-        {
-            return r*Math.sin(angle);
-        }
-    }
+    
 }
